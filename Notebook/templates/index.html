@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Image Prediction and Feedback</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    </head>
+<body>
+
+<div class="container">
+    <div class="conta">
+        <div class="bl-main" id="bl-main">
+
+            <section>
+                <div class="bl-box">
+                    <h2>My Wardrobe</h2>
+                </div>
+                <div class="bl-content">
+                    <h2>View and Manage Your Wardrobe</h2>
+                    <!-- My Wardrobe content here -->
+                </div>
+                <span class="bl-icon bl-icon-close">Close</span>
+            </section>
+
+            <section>
+                <header class="bl-box">
+                    <h2>New Clothes</h2>
+                </header>
+                <div class="bl-content">
+                    <form id="msform" action="/predict" method="post" enctype="multipart/form-data">
+                            <ul id="progressbar">
+                                <li class="active">Upload Image</li>
+                                <li>Prediction Results</li>
+                                <li>Feedback</li>
+                            </ul>
+
+                            <fieldset>
+                                <h2 class="fs-title">Add New Items</h2>
+                                <h3 class="fs-subtitle">Upload your image for prediction</h3>
+                                <input type="file" name="file" required>
+                                <button type="submit" name="next" class="action-button">Upload Image</button>
+                            </fieldset>
+
+                            <fieldset>
+                                <h2 class="fs-title">Prediction Results</h2>
+                                <div class="prediction-section">
+                                    <img id="uploadedImage" src="" alt="Uploaded Image" style="max-width: 200px; display: inline-block;">
+                                    <h3 class="fs-subtitle">What do we think it is?</h3>
+                                    <div id="predictedCategories"></div>
+                                </div>
+                                <input type="button" name="previous" class="previous action-button" value="Previous" />
+                                <input type="button" name="next" class="next action-button" value="Next" />
+                            </fieldset>
+
+                            <fieldset>
+                                <h2 class="fs-title">Provide Your Feedback</h2>
+                                <h3 class="fs-subtitle">Confirm the prediction and color</h3>
+                                <div id="feedbackSection">
+                                    <!-- Prediction categories will be loaded here as radio buttons -->
+                                    <label for="colorConfirmationCheckbox">Is this the correct color?</label>
+                                    <input type="checkbox" id="colorConfirmationCheckbox">
+                                    <br>
+                                    <div id="colorDisplay" style="width: 50px; height: 50px; border: 1px solid #000; margin-bottom: 10px;"></div>
+                                </div>
+                                <input type="button" name="previous" class="previous action-button" value="Previous" />
+                                <input type="submit" name="submit" class="submit action-button" value="Submit Feedback" />
+                            </fieldset>
+                    </form>
+                </div>
+                <span class="bl-icon bl-icon-close" aria-label="Close New Clothes Section"></span>
+            </section>
+
+            <section>
+                <div class="bl-box">
+                    <h2>Find a Look</h2>
+                </div>
+                <div class="bl-content">
+                    <h2>Find the Perfect Look</h2>
+                    <!-- Find a Look content here -->
+                </div>
+                <span class="bl-icon bl-icon-close">Close</span>
+            </section>
+
+            <section>
+                <div class="bl-box">
+                    <h2>Past Events</h2>
+                </div>
+                <div class="bl-content">
+                    <h2>Review Past Outfits</h2>
+                    <!-- Past Events content here -->
+                </div>
+                <span class="bl-icon bl-icon-close">Close</span>
+            </section>
+
+            <section>
+                <div class="bl-box">
+                    <h2>About Us</h2>
+                </div>
+                <div class="bl-content">
+                    <h2>Learn about us</h2>
+                    <!-- Past Events content here -->
+                </div>
+                <span class="bl-icon bl-icon-close">Close</span>
+            </section>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/boxlayout.js') }}"></script>
+<script>
+    $(function() {
+        Boxlayout.init();
+    });
+</script>
+
+</body>
+</html>
