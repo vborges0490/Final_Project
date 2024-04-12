@@ -79,6 +79,8 @@ $(document).ready(function() {
         }
     });
 
+
+
     // Handle click on the next button
     //$(".next").click(function() {
         // Move to the next step
@@ -184,4 +186,179 @@ $(document).ready(function() {
             }
         });
     }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded and parsed");
+
+    // Define all modal and button elements
+    var loginModal = document.getElementById("loginModal");
+    var loginButton = document.getElementById("loginButton");
+    var loginCloseButton = document.querySelector("#loginModal .close-button");
+    var loginForm = document.getElementById("loginForm");
+
+    var registerModal = document.getElementById("registerModal");
+    var registerOpenButton = document.getElementById("registerButton"); // Button inside loginModal to open registerModal
+    var registerCloseButton = document.querySelector("#registerModal .close-button");
+    var registerForm = document.getElementById("registerForm");
+
+    // Generic function to open modals
+    function openModal(modal) {
+        if (modal) modal.style.display = 'block';
+    }
+
+    // Generic function to close modals
+    function closeModal(modal) {
+        if (modal) modal.style.display = 'none';
+    }
+
+    // Show the login modal when the login button is clicked
+    loginButton.addEventListener('click', function() {
+        openModal(loginModal);
+    });
+
+    // Close the login modal when its close button is clicked
+    loginCloseButton.addEventListener('click', function() {
+        closeModal(loginModal);
+    });
+
+    // Transition from login to register modal
+    registerOpenButton.addEventListener('click', function() {
+        closeModal(loginModal);
+        openModal(registerModal);
+    });
+
+    // Close the register modal when its close button is clicked
+    registerCloseButton.addEventListener('click', function() {
+        closeModal(registerModal);
+    });
+
+
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var formData = new FormData(loginForm);
+        var data = {
+            username: formData.get('username'),
+            password: formData.get('password')
+        };
+
+        $.ajax({
+            url: '/login',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                console.log("Login response:", response); // Check what's actually in the response
+                if(response.success) {
+                    usernameDisplay.textContent = response.username; // Ensure this is the correct property
+                    userDetails.style.display = 'inline';
+                    loginButton.style.display = 'none';
+                    closeModal(loginModal);
+                } else {
+                    alert('Login failed: ' + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Login AJAX error:', error);
+                alert('An error occurred during login');
+            }
+        });
+    });
+
+    document.querySelectorAll('.close-button').forEach(button => {
+        button.addEventListener('click', function() {
+            var modal = this.closest('.modal'); // Get the closest modal parent
+            closeModal(modal);
+        });
+    });
+
+    changePasswordButton.addEventListener('click', function() {
+        openModal(document.getElementById("changePasswordModal")); // Open change password modal
+    });
+
+    function openModal(modal) {
+        if (modal) modal.style.display = 'block';
+    }
+
+    function closeModal(modal) {
+        if (modal) modal.style.display = 'none';
+    }
+
+    registerForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var formData = new FormData(registerForm);
+        var data = {
+            username: formData.get('username'),
+            email: formData.get('email'),
+            password: formData.get('password')
+        };
+
+        console.log("Attempting to register with:", data);
+
+        // Proceed with AJAX request...
+    });
+
+    loginButton.onclick = function() {
+        console.log("Login button clicked. Showing modal.");
+        modal.style.display = "block";
+    };
+
+    window.addEventListener('click', function(event) {
+        if (event.target === loginModal) closeModal(loginModal);
+        if (event.target === registerModal) closeModal(registerModal);
+    });
+});
+
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    e.preventDefault();  // Prevent the default form submission
+
+    var formData = new FormData(this);
+    var data = {
+        username: formData.get('username'),
+        email: formData.get('email'),
+        password: formData.get('password')
+    };
+
+    // AJAX request to the server for user registration
+    $.ajax({
+        url: '/register',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function(response) {
+            alert('Registration successful');
+            // Close the registration modal here if needed
+            // You might also want to redirect the user or update the UI accordingly
+        },
+        error: function(xhr, status, error) {
+            alert('Registration failed: ' + xhr.responseText);
+        }
+    });
+});
+
+document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+    e.preventDefault();  // Prevent the default form submission
+
+    var formData = new FormData(this);
+    var data = {
+        username: formData.get('username'),
+        old_password: formData.get('old_password'),
+        new_password: formData.get('new_password')
+    };
+
+    // AJAX request to the server for changing password
+    $.ajax({
+        url: '/change_password',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function(response) {
+            alert('Password change successful');
+            // Close the change password modal here if needed
+            // You might also want to redirect the user or update the UI accordingly
+        },
+        error: function(xhr, status, error) {
+            alert('Password change failed: ' + xhr.responseText);
+        }
+    });
 });

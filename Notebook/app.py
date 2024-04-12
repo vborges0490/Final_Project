@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, url_for, jsonify, flash
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from tensorflow.keras.models import load_model
 from PIL import Image
 import numpy as np
@@ -7,11 +8,105 @@ import io
 import uuid
 from sklearn.cluster import KMeans
 import os
+import logging
+import mysql.connector
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+load_dotenv()
+
+password = os.getenv('PASSWORD')
+username = os.getenv('USER')
+host = os.getenv('HOST')
+port = os.getenv('PORT')
+
+engine = create_engine('mysql+mysqlconnector://' + username + ':' + password + '@' + host + ':' + port + '/LookMe')
+Session = sessionmaker(bind=engine)
+Base = declarative_base()
 
 app = Flask(__name__)
 
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = 'users'
+    id = Column('UserID', Integer, primary_key=True, autoincrement=True)
+    username = Column('Username', String(255), nullable=False)  # Case as per DB schema
+    email = Column('Email', String(255), unique=True, nullable=False)
+    password_hash = Column('PasswordHash', String(255), nullable=False)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
 # Load your trained model
 model = load_model('vini_fashion_model.keras')
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    session = Session()
+    user = session.query(User).filter_by(username=username).first()
+
+    if user:
+        # Enhanced debugging: Log the stored password hash
+        print(f"Stored hash for '{user.username}': {user.password_hash}")
+
+        is_password_correct = user.check_password(password)
+        # Log the outcome of the password check
+        print(f"Password verification for '{user.username}': {is_password_correct}")
+
+        if is_password_correct:
+            return jsonify({'success': True}), 200
+        else:
+            return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+    else:
+        print(f"No user found with username: '{username}'")
+        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    data = request.get_json()
+    username = data['username']
+    old_password = data['old_password']
+    new_password = data['new_password']
+    
+    session = Session()
+    user = session.query(User).filter_by(username=username).first()
+    if user and user.check_password(old_password):
+        user.set_password(new_password)
+        session.commit()
+        return jsonify({'success': True, 'message': 'Password changed successfully'}), 200
+    else:
+        return jsonify({'success': False, 'message': 'Invalid username or password'}), 401
+    
+@app.route('/register', methods=['POST'])
+def register_user():
+    data = request.get_json()
+    username = data['username']
+    email = data['email']
+    password = data['password']
+    
+    session = Session()
+    existing_user = session.query(User).filter_by(username=username).first()
+    if existing_user:
+        return jsonify({'success': False, 'message': 'Username already taken'}), 409
+
+    new_user = User(username=username, email=email)
+    new_user.set_password(password)
+    session.add(new_user)
+    session.commit()
+
+    return jsonify({'success': True, 'message': 'User registered successfully'}), 201
 
 def preprocess_image(image, target_size):
     """Resize and normalize the image to fit the model's expected input format."""
@@ -128,4 +223,4 @@ app.config['SECRET_KEY'] = 'your_secret_key'  # Needed for flashing messages
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True) 

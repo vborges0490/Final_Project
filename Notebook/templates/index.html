@@ -8,6 +8,59 @@
     </head>
 <body>
 
+ <div id="loginModal" class="modal">
+     <div class="modal-content">
+         <span class="close-button">&times;</span>
+         <h2>Login to Your Account</h2>
+         <form id="loginForm">
+             <label for="loginUsername">Username:</label>
+             <input type="text" id="loginUsername" name="username" required>
+             <label for="loginPassword">Password:</label>
+             <input type="password" id="loginPassword" name="password" required>
+             <input type="submit" value="Login">
+             <!-- Additional link or button to switch to the registration modal -->
+             <button id="registerButton" type="button">Register</button>
+         </form>
+     </div>
+ </div>
+
+ <div id="registerModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Register New Account</h2>
+        <form id="registerForm">
+            <label for="registerUsername">Username:</label>
+            <input type="text" id="registerUsername" name="username" required>
+            <label for="registerEmail">Email:</label>
+            <input type="email" id="registerEmail" name="email" required>
+            <label for="registerPassword">Password:</label>
+            <input type="password" id="registerPassword" name="password" required>
+            <input type="submit" value="Register">
+        </form>
+    </div>
+</div>
+<div id="changePasswordModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Change Password</h2>
+        <form id="changePasswordForm">
+            <label for="changePasswordUsername">Username:</label>
+            <input type="text" id="changePasswordUsername" name="username" required>
+            <label for="changePasswordOld">Old Password:</label>
+            <input type="password" id="changePasswordOld" name="old_password" required>
+            <label for="changePasswordNew">New Password:</label>
+            <input type="password" id="changePasswordNew" name="new_password" required>
+            <input type="submit" value="Change Password">
+        </form>
+    </div>
+</div>   
+<div class="top-right-login">
+    <button id="loginButton" class="action-button">Sign In</button>
+    <span id="userDetails" style="display: none;">
+        <span id="usernameDisplay"></span>
+        <button id="changePasswordButton" class="action-button">Change Password</button>
+    </span>
+</div>   
 <div class="container">
     <div class="conta">
         <div class="bl-main" id="bl-main">

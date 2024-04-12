@@ -1,0 +1,68 @@
+CREATE DATABASE IF NOT EXISTS LookMe;
+USE LookMe;
+
+CREATE TABLE Users (
+    UserID INT AUTO_INCREMENT PRIMARY KEY,
+    Username VARCHAR(255) NOT NULL,
+    Email VARCHAR(255) NOT NULL,
+    PasswordHash VARCHAR(255) NOT NULL,
+    UNIQUE INDEX idx_email (Email)
+);
+
+CREATE TABLE Images (
+    ImageID INT AUTO_INCREMENT PRIMARY KEY,
+    UserID INT,
+    ImagePath VARCHAR(255) NOT NULL,
+    UploadTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+);
+
+CREATE TABLE Predictions (
+    PredictionID INT AUTO_INCREMENT PRIMARY KEY,
+    ImageID INT,
+    Category VARCHAR(255) NOT NULL,
+    Confidence DECIMAL(5,4),
+    PredictionTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ImageID) REFERENCES Images(ImageID)
+);
+
+CREATE TABLE Feedback (
+    FeedbackID INT AUTO_INCREMENT PRIMARY KEY,
+    PredictionID INT,
+    IsCorrectColor BOOLEAN,
+    UserFeedback TEXT,
+    FeedbackTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (PredictionID) REFERENCES Predictions(PredictionID)
+);
+
+CREATE TABLE Colors (
+    ColorID INT AUTO_INCREMENT PRIMARY KEY,
+    ImageID INT,
+    DominantColorHex VARCHAR(7) NOT NULL,
+    FOREIGN KEY (ImageID) REFERENCES Images(ImageID)
+);
+
+CREATE TABLE Events (
+    EventID INT AUTO_INCREMENT PRIMARY KEY,
+    UserID INT,
+    EventTime ENUM('Day', 'Night'),
+    EventType ENUM('Formal', 'Social'),
+    Weather ENUM('Warm', 'Cold'),
+    CreationTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+);
+
+CREATE TABLE Looks (
+    LookID INT AUTO_INCREMENT PRIMARY KEY,
+    EventID INT,
+    CreationTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (EventID) REFERENCES Events(EventID)
+);
+
+CREATE TABLE LookImages (
+    LookImageID INT AUTO_INCREMENT PRIMARY KEY,
+    LookID INT,
+    ImageID INT,
+    FOREIGN KEY (LookID) REFERENCES Looks(LookID),
+    FOREIGN KEY (ImageID) REFERENCES Images(ImageID)
+);

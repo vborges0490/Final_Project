@@ -531,7 +531,7 @@ section.bl-expand .bl-icon-close {
     height: 100%; /* Full height */
     overflow: auto; /* Enable scroll if needed */
     background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
 }
 
 .container-newcloths {
@@ -609,9 +609,111 @@ fieldset {
 }
 
 /* Modal Content */
-.modal-content-additems {
-    max-height: 300px; /* Or any height that suits your design */
-    overflow: auto; /* Adds scrollbar if the content overflows */
+.modal-content {
+    background-color: #58504A;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #D3C4E3;
+    width: 80%; /* Could be more or less, depending on screen size */
+	justify-content: center; /* Center children vertically */
+	display: flex; /* Use flexbox layout */
+    flex-direction: column; /* Stack children vertically */
+    align-items: center; /* Center children horizontally */
+}
+
+#loginModal {
+    display: none; /* Hide modal by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    
+    /* Centering the modal box */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-box {
+    background: white;
+    border-radius: 5px;
+	position: relative;
+    max-width: 600px; /* Maximum width but can be less */
+    width: auto; /* Adjust width to fit the content */
+    margin: 10px; /* Margin for aesthetics */
+}
+
+.close-button {
+    color: #aaa;
+    position: absolute; /* Absolute position relative to the .modal-content */
+    top: 10px; /* Adjust the value as needed for spacing from the top */
+    right: 10px; /* Adjust the value as needed for spacing from the right */
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer; /* Change cursor to indicate this is a clickable element */
+}
+
+#loginButton {
+    display: block; /* Center the button */
+    width: 200px; /* Set the width of the button */
+    margin: 50px auto 20px; /* Large top margin, auto centers horizontally */
+    padding: 15px 30px; /* Padding for aesthetics */
+    font-size: 20px; /* Font size for visibility */
+    background-color: #aaa; /* A nice green shade; change as needed */
+    color: white; /* Text color */
+    border: none; /* Remove border */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Change mouse icon to indicate it's clickable */
+    transition: all 0.3s ease; /* Smooth transition for mouse events */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+#loginButton:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* More pronounced shadow on hover */
+    transform: translateY(-2px); /* Slightly raise the button */
+}
+
+#loginButton:active {
+    transform: translateY(1px); /* Depress the button on click */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Smaller shadow for pressed effect */
+}
+
+#changePasswordButton {
+  display: block; /* Center the button */
+  width: 200px; /* Set the width of the button */
+  margin: 50px auto 20px; /* Large top margin, auto centers horizontally */
+  padding: 15px 30px; /* Padding for aesthetics */
+  font-size: 20px; /* Font size for visibility */
+  background-color: #aaa; /* A nice green shade; change as needed */
+  color: white; /* Text color */
+  border: none; /* Remove border */
+  border-radius: 5px; /* Rounded corners */
+  cursor: pointer; /* Change mouse icon to indicate it's clickable */
+  transition: all 0.3s ease; /* Smooth transition for mouse events */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+#changePasswordButton:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* More pronounced shadow on hover */
+  transform: translateY(-2px); /* Slightly raise the button */
+}
+
+#changePasswordButton:active {
+  transform: translateY(1px); /* Depress the button on click */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Smaller shadow for pressed effect */
+}
+
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 /* The Close Button */
@@ -637,10 +739,6 @@ fieldset {
 
 html {
   height: 100%;
-  /*Image only BG fallback*/
-
-  /*background = gradient + image pattern combo*/
-  background: linear-gradient(rgba(196, 102, 0, 0.6), rgba(155, 89, 182, 0.6));
 }
 
 body {
@@ -648,7 +746,7 @@ body {
 }
 /*form styles*/
 #msform {
-  width: 400px;
+  width: 500px;
   margin: 50px auto;
   text-align: center;
   position: relative;
