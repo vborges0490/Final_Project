@@ -1,152 +1,82 @@
 $(document).ready(function() {
-
-    Boxlayout.init();
-    // Initialize the Boxlayout script
     $("#msform fieldset").hide();
     $("#msform fieldset:first").show().addClass('active');
 
-    function goToNextFieldset(currentFieldset) {
-        var nextFieldset = currentFieldset.next();
+    // Listen for the form submit event
+    $('#msform').submit(function(e) {
+        // Prevent the default form submission
+        e.preventDefault();
 
-        nextFieldset.addClass('active').show();
-        currentFieldset.removeClass('active').hide();
-    }
+        // Check which fieldset is active
+        var currentFieldset = $(this).find('fieldset.active');
 
-    // Upload form submission
-    $('#msform').on('submit', function(e) {
-        e.preventDefault(); // Prevent the default form submission
-
-        // If this is the first fieldset, handle the file upload via AJAX
-        if ($(this).find('fieldset:first').hasClass('active')) {
+        // If the active fieldset is the first one, handle the file upload via AJAX
+        if (currentFieldset.has('input[type="file"]').length) {
             var formData = new FormData(this);
 
-            // AJAX request for image upload
             $.ajax({
                 url: '/predict',
                 type: 'POST',
                 data: formData,
                 contentType: false,
                 processData: false,
-                dataType: 'json', // Ensure response is treated as JSON
                 success: function(data) {
-                    console.log(data); // Add this line to see what 'data' contains
-                
-                    $('#uploadedImage').attr('src', data.imagePath).show();
+                    console.log("Received data: ", data);
 
-                    var image = document.getElementById('uploadedImage');
-                    image.src = data.uploaded_image_path; // Set the source to the image path
+                    if (!data.uploaded_image_path || !data.predicted_categories) {
+                        console.error('Required data missing in API response');
+                        return;
+                    }
+
+                    $('#uploadedImage').attr('src', data.uploaded_image_path).show();
 
                     var predictedCategories = $('#predictedCategories');
-                    predictedCategories.empty(); // Clear existing content
-                
-                    // Check if 'data.predictions' exists before trying to use it
-                    if (data.predicted_categories && Array.isArray(data.predicted_categories)) {
-                        data.predicted_categories.forEach(function(categoryArray, index) {
-                            // Assuming the category name is the first element in the inner array
-                            var categoryName = categoryArray[0]; // Adjust based on actual structure
-                            var radioButton = '<input type="radio" id="prediction' + index +
-                                              '" name="prediction" value="' + categoryName +
-                                              '"><label for="prediction' + index + '">' + categoryName +
-                                              '</label>'; // Removed the <br> tag here
-                            predictedCategories.append(radioButton);
-                        });
-                    } else {
-                        console.error('Predicted categories are undefined or not an array');
-                    }
-                
-                    $('.prediction-section').show();
+                    predictedCategories.empty();
+                    data.predicted_categories.forEach(function(category, index) {
+                        var radioButton = `<input type="radio" id="prediction${index}"
+                                              name="prediction" value="${category[0]}">
+                                           <label for="prediction${index}">${category[0]}</label>`;
+                        predictedCategories.append(radioButton);
+                    });
 
-                    if (data.dominant_color_hex) {
-                        $('#colorDisplay').css('background-color', data.dominant_color_hex);
-                    } else {
-                        console.error('Dominant color is undefined');
-                    }
-
-                    var currentStep = $("#msform fieldset.active");
-                    var nextStep = currentStep.next("fieldset");
-                    updateUIWithPredictionResults(data);
                     // Move to the next fieldset
-                    console.log("Moving from step:", currentStep.index(), " to:", nextStep.index());
-
-                    goToNextFieldset($('#msform fieldset.active'));
-                    navigateFormSteps(currentStep, 'next');
+                    goToNextFieldset(currentFieldset);
                 },
-                error: function(xhr) {
-                    console.log('Upload error', xhr);
+                error: function(xhr, status, error) {
+                    console.error('Upload error:', error);
                     alert('An error occurred while uploading the image. Please try again.');
                 }
             });
+        } else {
+            // Handle the submission of other fieldsets if necessary
         }
     });
 
-    $(".next, .previous").click(function() {
-        var direction = $(this).hasClass('next') ? 'next' : 'previous';
-        navigateFormSteps($(this), direction);
-    });
-
-    function navigateFormSteps(button, direction) {
-        var current_fs = button.closest("fieldset");
-        var next_fs = direction === 'next' ? current_fs.next("fieldset") : current_fs.prev("fieldset");
-    
-        // Ensure there's a next fieldset to go to
-        if(next_fs.length > 0) {
-            // Fade out the current fieldset and upon completion, fade in the next fieldset
-            current_fs.fadeOut(400, function() {
-                // Remove 'active' class from all fieldsets then add to next
-                $("fieldset").removeClass('active');
-                next_fs.addClass('active');
-                
-                // Fade in the next fieldset
-                next_fs.fadeIn(400);
-                
-                // Update the progress bar
-                var index = $("fieldset").index(next_fs);
-                $("#progressbar li").removeClass("active").eq(index).addClass("active");
-                
-                // Set focus for accessibility
-                next_fs.find(':input:not([type="hidden"]):first').focus();
-            });
+    function goToNextFieldset(currentFieldset) {
+        var nextFieldset = currentFieldset.next();
+        if (nextFieldset.length) {
+            currentFieldset.removeClass('active').hide();
+            nextFieldset.addClass('active').show();
         }
     }
 
-    // Function to update UI with prediction results
-    function updateUIWithPredictionResults(data) {
-        // Update the DOM with the prediction results
-        $('#predictionResult').html(data.prediction); // Assuming 'data.prediction' is the result
-        // If you have other elements to update, add them here
+    function goToPreviousFieldset(currentFieldset) {
+        var previousFieldset = currentFieldset.prev();
+        if (previousFieldset.length) {
+            currentFieldset.removeClass('active').hide();
+            previousFieldset.addClass('active').show();
+        }
     }
-    
-    // Submit feedback button click
-    $('#submitFeedbackButton').click(function() {
-        submitFeedback();
+
+    $(".next").click(function() {
+        var currentFieldset = $(this).closest('fieldset');
+        goToNextFieldset(currentFieldset);
     });
 
-    // Function to submit feedback
-    function submitFeedback() {
-        var selectedCategory = $('input[name="category"]:checked').val(); // Corrected element reference
-        var colorConfirmed = $('#colorConfirmationCheckbox').is(':checked'); // Corrected ID reference
-
-        // AJAX request to submit feedback
-        $.ajax({
-            url: '/feedback', // Your Flask route for feedback submission
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                category: selectedCategory,
-                colorConfirmed: colorConfirmed
-            }),
-            success: function(response) {
-                // Handle success - maybe display a message or clear the form
-                console.log('Feedback submitted successfully');
-                alert('Thank you for your feedback!');
-            },
-            error: function(xhr, status, error) {
-                // Handle error
-                console.log('Feedback submission error', xhr);
-                alert('An error occurred while submitting your feedback. Please try again.');
-            }
-        });
-    }
+    $(".previous").click(function() {
+        var currentFieldset = $(this).closest('fieldset');
+        goToPreviousFieldset(currentFieldset);
+    });
 });
 
 document.addEventListener('DOMContentLoaded', function() {

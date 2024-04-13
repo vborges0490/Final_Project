@@ -2,7 +2,7 @@ from flask import Flask, request, render_template, url_for, jsonify, flash, sess
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from tensorflow.keras.models import load_model
-from PIL import Image
+from PIL import Image as PILImage
 import numpy as np
 import io
 import uuid
@@ -10,10 +10,11 @@ from sklearn.cluster import KMeans
 import os
 import logging
 import mysql.connector
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func, DECIMAL
 from dotenv import load_dotenv
 
 logging.basicConfig()
@@ -46,6 +47,23 @@ class User(Base):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+class Image(Base):
+    __tablename__ = 'Images'
+    ImageID = Column(Integer, primary_key=True, autoincrement=True)
+    UserID = Column(Integer, nullable=True)  # Adjust based on your user relation
+    ImagePath = Column(String(255), nullable=False)
+    UploadTime = Column(DateTime, default=func.now())
+
+class Prediction(Base):
+    __tablename__ = 'Predictions'
+    PredictionID = Column(Integer, primary_key=True, autoincrement=True)
+    ImageID = Column(Integer, ForeignKey('Images.ImageID'))
+    Category = Column(String(255), nullable=False)
+    Confidence = Column(DECIMAL(5,4))
+    PredictionTime = Column(DateTime, default=func.now())
+
+Base.metadata.create_all(bind=engine)
+
 # Load your trained model
 model = load_model('vini_fashion_model.keras')
 
@@ -55,8 +73,9 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    session = Session()
-    user = session.query(User).filter_by(username=username).first()
+    # Open a new database session for querying
+    session_db = Session()
+    user = session_db.query(User).filter_by(username=username).first()
 
     if user:
         # Enhanced debugging: Log the stored password hash
@@ -67,10 +86,18 @@ def login():
         print(f"Password verification for '{user.username}': {is_password_correct}")
 
         if is_password_correct:
+            # Set the user ID in the Flask session
+            session['user_id'] = user.id
+            # Close the database session after use
+            session_db.close()
             return jsonify({'success': True, 'username': username}), 200
         else:
+            # Close the database session after use
+            session_db.close()
             return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
     else:
+        # Close the database session after use
+        session_db.close()
         print(f"No user found with username: '{username}'")
         return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
@@ -188,40 +215,80 @@ def predict():
     file = request.files['file']
     if file.filename == '':
         return jsonify(error='No selected file'), 400
-    if file:
-        # Generate a random filename
-        ext = os.path.splitext(file.filename)[1]
-        random_filename = str(uuid.uuid4()) + ext
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], random_filename)
-        file.save(filepath.replace('\\', '/'))  # Ensure we're using forward slashes
-        print('Saving file to:', filepath)  # Outputs the file path to your console
 
-        uploaded_image_path = 'uploads/' + random_filename
+    # Generate a random filename
+    ext = os.path.splitext(file.filename)[1]
+    random_filename = str(uuid.uuid4()) + ext
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], random_filename)
+    file.save(filepath)  # Ensure we're using forward slashes
+    print('Saving file to:', filepath)  # Outputs the file path to your console
 
-        # Load the saved image for processing
-        image = Image.open(filepath)
-        processed_image = preprocess_image(image, target_size=(28, 28))
+    uploaded_image_path = 'uploads/' + random_filename
 
-        # Predict the category
-        predictions = model.predict(processed_image)
-        predictions = predictions.flatten()
-        top_two_indices = predictions.argsort()[-2:][::-1]
-        categories = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 
-                      'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+    # Load the saved image for processing
+    image = PILImage.open(filepath)
+    processed_image = preprocess_image(image, target_size=(28, 28))
 
-        top_two_categories = [(categories[index], float(predictions[index])) for index in top_two_indices]
+    # Predict the category
+    predictions = model.predict(processed_image)
+    predictions = predictions.flatten()
+    top_two_indices = predictions.argsort()[-2:][::-1]
+    categories = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 
+                  'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+    top_two_categories = [(categories[index], float(predictions[index])) for index in top_two_indices]
 
-        # Extract dominant colors
-        dominant_colors = extract_dominant_color(image, num_colors=1)
-        dominant_color_rgb = dominant_colors[0].tolist()
-        dominant_color_hex = rgb_to_hex(tuple(dominant_color_rgb))
+    dominant_colors = extract_dominant_color(image, num_colors=1)
+    dominant_color_rgb = dominant_colors[0].tolist()
+    dominant_color_hex = rgb_to_hex(tuple(dominant_color_rgb))
+    # Open a session to save to the database
+    session_db = Session()
+    try:
+        # Check if the user is logged in
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'message': 'User not logged in'}), 401
 
-        # Render the HTML template with all context variables
+        # Save image information in the database
+        new_image = Image(UserID=user_id, ImagePath=uploaded_image_path)
+        session_db.add(new_image)
+        session_db.commit()
+
+        # Save prediction information in the database
+        new_prediction = Prediction(ImageID=new_image.ImageID,
+                                    Category=top_two_categories[0][0],
+                                    Confidence=top_two_categories[0][1])
+        session_db.add(new_prediction)
+        session_db.commit()
+
         return jsonify({
-            'uploaded_image_path': url_for('static', filename='uploads/' + random_filename.replace('\\', '/')),
+            'uploaded_image_path': url_for('static', filename=uploaded_image_path),
             'predicted_categories': top_two_categories,
-            'dominant_color_hex': dominant_color_hex
+            'dominant_color_hex': dominant_color_hex,
+            'predictionID': new_prediction.PredictionID
         })
+    except Exception as e:
+        session_db.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        session_db.close()
+
+
+@app.route('/submit-feedback', methods=['POST'])
+def submit_feedback():
+    data = request.get_json()
+    new_feedback = Feedback(
+        PredictionID=data['predictionID'],
+        IsCorrectColor=data['isCorrectColor'],
+        UserFeedback=data['userFeedback']
+    )
+
+    try:
+        session.add(new_feedback)
+        session.commit()
+        return jsonify({'success': True, 'message': 'Feedback submitted successfully'}), 200
+    except Exception as e:
+        session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.errorhandler(500)
 def internal_error(error):
