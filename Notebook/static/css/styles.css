@@ -708,6 +708,20 @@ fieldset {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Smaller shadow for pressed effect */
 }
 
+#userDetails {
+  display: block; /* Center the button */
+  width: 400px; /* Set the width of the button */
+  margin: 50px auto 20px; /* Large top margin, auto centers horizontally */
+  padding: 15px 30px; /* Padding for aesthetics */
+  font-size: 20px; /* Font size for visibility */
+  color: white; /* Text color */
+  border: none; /* Remove border */
+  border-radius: 5px; /* Rounded corners */
+  cursor: pointer; /* Change mouse icon to indicate it's clickable */
+  transition: all 0.3s ease; /* Smooth transition for mouse events */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  text-align: center;
+}
 
 .close-button:hover,
 .close-button:focus {

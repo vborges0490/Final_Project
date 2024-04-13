@@ -79,32 +79,6 @@ $(document).ready(function() {
         }
     });
 
-
-
-    // Handle click on the next button
-    //$(".next").click(function() {
-        // Move to the next step
-    //    var current_fs = $(this).closest("fieldset");
-    //    var next_fs = current_fs.next();
-
-        // Add 'active' class to the next fieldset and show it
-    //    next_fs.addClass('active').show();
-        // Remove 'active' class from the current fieldset and hide it
-    //    current_fs.removeClass('active').hide();
-    //});
-
-    // Handle click on the previous button
-    //$(".previous").click(function() {
-        // Move to the previous step
-    //    var current_fs = $(this).closest("fieldset");
-    //    var previous_fs = current_fs.prev();
-
-        // Add 'active' class to the previous fieldset and show it
-    //    previous_fs.addClass('active').show();
-        // Remove 'active' class from the current fieldset and hide it
-    //    current_fs.removeClass('active').hide();
-    //});
-
     $(".next, .previous").click(function() {
         var direction = $(this).hasClass('next') ? 'next' : 'previous';
         navigateFormSteps($(this), direction);
@@ -134,19 +108,6 @@ $(document).ready(function() {
             });
         }
     }
-
-    // Function to navigate form steps
-    //function navigateFormSteps(button, direction) {
-    //    var current_fs = button.parent();
-    //    var next_fs = direction === 'next' ? current_fs.next() : current_fs.prev();
-
-        // Activate the next step on the progress bar
-    //    $('#progressbar li').eq($('fieldset').index(next_fs)).addClass('active');
-
-        // Show the next fieldset and hide the current one
-    //    next_fs.show();
-    //    current_fs.hide();
-    //}
 
     // Function to update UI with prediction results
     function updateUIWithPredictionResults(data) {
@@ -233,36 +194,102 @@ document.addEventListener('DOMContentLoaded', function() {
         closeModal(registerModal);
     });
 
-
-    loginForm.addEventListener('submit', function(e) {
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        var formData = new FormData(loginForm);
+        var formData = new FormData(this);
         var data = {
             username: formData.get('username'),
             password: formData.get('password')
         };
 
+        // AJAX request for login
         $.ajax({
             url: '/login',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(data),
             success: function(response) {
-                console.log("Login response:", response); // Check what's actually in the response
-                if(response.success) {
-                    usernameDisplay.textContent = response.username; // Ensure this is the correct property
-                    userDetails.style.display = 'inline';
-                    loginButton.style.display = 'none';
-                    closeModal(loginModal);
+                if (response.success) {
+                    alert('Registration successful, you are now logged in as ' + response.username);
+                    closeModal(document.getElementById('registerModal'));
+                    // Update UI to reflect logged-in state
+                    document.getElementById('userDetails').style.display = 'block';
+                    document.getElementById('usernameDisplay').textContent = response.username;
+                    document.getElementById('loginButton').style.display = 'none';
                 } else {
-                    alert('Login failed: ' + response.message);
+                    alert('Registration failed: ' + response.message);
                 }
             },
             error: function(xhr, status, error) {
-                console.error('Login AJAX error:', error);
-                alert('An error occurred during login');
+                alert('Registration failed: ' + xhr.responseText);
             }
         });
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();  // Prevent the default form submission
+    
+        var formData = new FormData(this);
+        var data = {
+            username: formData.get('username'),
+            email: formData.get('email'),
+            password: formData.get('password')
+        };
+    
+        // AJAX request to the server for user registration
+        $.ajax({
+            url: '/register',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                if (response.success) {
+                    alert('Registration successful, you are now logged in as ' + response.username);
+                    closeModal(document.getElementById('registerModal'));
+                    // Update UI to reflect logged-in state
+                    document.getElementById('userDetails').style.display = 'block';
+                    document.getElementById('usernameDisplay').textContent = response.username;
+                    document.getElementById('loginButton').style.display = 'none';
+                } else {
+                    alert('Registration failed: ' + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Registration failed: ' + xhr.responseText);
+            }
+        });
+    });
+    
+    document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+        e.preventDefault();  // Prevent the default form submission
+    
+        var formData = new FormData(this);
+        var data = {
+            username: formData.get('username'),
+            old_password: formData.get('old_password'),
+            new_password: formData.get('new_password')
+        };
+    
+        // AJAX request to the server for changing password
+        $.ajax({
+            url: '/change_password',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                alert('Password change successful');
+                // Close the change password modal here if needed
+                // You might also want to redirect the user or update the UI accordingly
+            },
+            error: function(xhr, status, error) {
+                alert('Password change failed: ' + xhr.responseText);
+            }
+        });
+    });
+
+    // Optionally, handle changePasswordButton click to open the change password modal
+    changePasswordButton.addEventListener('click', function() {
+        // Open change password modal logic here
     });
 
     document.querySelectorAll('.close-button').forEach(button => {
@@ -309,56 +336,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-document.getElementById('registerForm').addEventListener('submit', function(e) {
-    e.preventDefault();  // Prevent the default form submission
-
-    var formData = new FormData(this);
-    var data = {
-        username: formData.get('username'),
-        email: formData.get('email'),
-        password: formData.get('password')
-    };
-
-    // AJAX request to the server for user registration
-    $.ajax({
-        url: '/register',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(data),
-        success: function(response) {
-            alert('Registration successful');
-            // Close the registration modal here if needed
-            // You might also want to redirect the user or update the UI accordingly
-        },
-        error: function(xhr, status, error) {
-            alert('Registration failed: ' + xhr.responseText);
-        }
-    });
-});
-
-document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
-    e.preventDefault();  // Prevent the default form submission
-
-    var formData = new FormData(this);
-    var data = {
-        username: formData.get('username'),
-        old_password: formData.get('old_password'),
-        new_password: formData.get('new_password')
-    };
-
-    // AJAX request to the server for changing password
-    $.ajax({
-        url: '/change_password',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(data),
-        success: function(response) {
-            alert('Password change successful');
-            // Close the change password modal here if needed
-            // You might also want to redirect the user or update the UI accordingly
-        },
-        error: function(xhr, status, error) {
-            alert('Password change failed: ' + xhr.responseText);
-        }
-    });
-});

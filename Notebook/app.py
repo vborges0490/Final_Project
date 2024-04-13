@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, url_for, jsonify, flash
+from flask import Flask, request, render_template, url_for, jsonify, flash, session
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from tensorflow.keras.models import load_model
@@ -13,6 +13,7 @@ import mysql.connector
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
 from dotenv import load_dotenv
 
 logging.basicConfig()
@@ -66,7 +67,7 @@ def login():
         print(f"Password verification for '{user.username}': {is_password_correct}")
 
         if is_password_correct:
-            return jsonify({'success': True}), 200
+            return jsonify({'success': True, 'username': username}), 200
         else:
             return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
     else:
@@ -96,17 +97,22 @@ def register_user():
     email = data['email']
     password = data['password']
     
-    session = Session()
-    existing_user = session.query(User).filter_by(username=username).first()
-    if existing_user:
-        return jsonify({'success': False, 'message': 'Username already taken'}), 409
-
-    new_user = User(username=username, email=email)
-    new_user.set_password(password)
-    session.add(new_user)
-    session.commit()
-
-    return jsonify({'success': True, 'message': 'User registered successfully'}), 201
+    session = Session()  # Create a new session instance
+    try:
+        existing_user = session.query(User).filter_by(username=username).first()
+        if existing_user:
+            return jsonify({'success': False, 'message': 'Username already taken'}), 409
+        
+        new_user = User(username=username, email=email)
+        new_user.set_password(password)
+        session.add(new_user)
+        session.commit()
+        return jsonify({'success': True, 'username': username}), 201
+    except IntegrityError as e:
+        session.rollback()
+        return jsonify({'success': False, 'message': 'This username or email is already registered.'}), 400
+    finally:
+        session.close()  #
 
 def preprocess_image(image, target_size):
     """Resize and normalize the image to fit the model's expected input format."""
@@ -216,6 +222,11 @@ def predict():
             'predicted_categories': top_two_categories,
             'dominant_color_hex': dominant_color_hex
         })
+
+@app.errorhandler(500)
+def internal_error(error):
+    app.logger.error('Server Error: %s', (error))
+    return "Something went wrong, we are working on it", 500
 
 # Make sure to define UPLOAD_FOLDER in your Flask app config and create the directory if it doesn't exist
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
