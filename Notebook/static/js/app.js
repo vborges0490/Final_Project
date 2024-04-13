@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
             username: formData.get('username'),
             password: formData.get('password')
         };
-
+    
         // AJAX request for login
         $.ajax({
             url: '/login',
@@ -210,18 +210,32 @@ document.addEventListener('DOMContentLoaded', function() {
             data: JSON.stringify(data),
             success: function(response) {
                 if (response.success) {
-                    alert('Registration successful, you are now logged in as ' + response.username);
-                    closeModal(document.getElementById('registerModal'));
-                    // Update UI to reflect logged-in state
+                    // If login is successful, display the userDetails container
+                    // and update it with the username from the response.
                     document.getElementById('userDetails').style.display = 'block';
                     document.getElementById('usernameDisplay').textContent = response.username;
+                    
+                    // Hide the login button and show the change password button
                     document.getElementById('loginButton').style.display = 'none';
+                    document.getElementById('changePasswordButton').style.display = 'block';
+                    
+                    // Close the login modal
+                    closeModal(document.getElementById('loginModal'));
+    
+                    // Replace the "Sign In" button with a "Change Password" button
+                    // This assumes you have a button with id 'changePasswordButton' in your HTML
+                    document.getElementById('changePasswordButton').style.display = 'inline-block'; // Show change password button
+                    $('.container').show();
+    
+                    // Hide the login modal
+                    closeModal(loginModal);
                 } else {
-                    alert('Registration failed: ' + response.message);
+                    // Handle login failure
+                    alert('Login failed: ' + response.message);
                 }
             },
             error: function(xhr, status, error) {
-                alert('Registration failed: ' + xhr.responseText);
+                alert('Login failed: ' + xhr.responseText);
             }
         });
     });
@@ -250,6 +264,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('userDetails').style.display = 'block';
                     document.getElementById('usernameDisplay').textContent = response.username;
                     document.getElementById('loginButton').style.display = 'none';
+                    $('.container').show();
+
+                    closeModal(loginModal);
                 } else {
                     alert('Registration failed: ' + response.message);
                 }

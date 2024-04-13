@@ -51,7 +51,11 @@ a:hover {
     height: 100vh; /* Full height of the viewport */
 }
 
-.container { height: 100%; width: 100%;}
+.container {
+  display: none;
+  height: 100%; 
+  width: 100%;
+}
 
 .bl-main {
 	position: absolute;
