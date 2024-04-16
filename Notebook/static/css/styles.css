@@ -823,8 +823,8 @@ body {
 }
 
 #findLookForm {
-  width: 500px;
-  margin: 50px auto;
+  width: 600px;
+  margin: 40px auto;
   text-align: center;
   position: relative;
 }
@@ -1022,4 +1022,46 @@ body {
 #progressbar li.active:after {
   background: #27ae60;
   color: white;
+}
+
+label {
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Styles for the select elements */
+select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f8f8f8;
+  font-size: 16px;
+  color: #333;
+  -webkit-appearance: none; /* Removes default chrome and safari style */
+  -moz-appearance: none; /* Removes default style Firefox */
+  appearance: none; /* Removes default browser style*/
+}
+
+/* Styles for select elements on focus */
+select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+/* Add a custom arrow indicator for select elements */
+select {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="12" viewBox="0 0 14 12"><polygon fill="%23666" points="1 0 7 6 13 0"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px top 50%;
+  background-size: 14px 12px;
+}
+
+/* Hide the arrow indicator in IE */
+select::-ms-expand {
+  display: none;
 }

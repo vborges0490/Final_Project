@@ -1,6 +1,8 @@
 $(document).ready(function() {
     $("#msform fieldset").hide();
     $("#msform fieldset:first").show().addClass('active');
+    $("#findLookForm fieldset").hide();
+    $("#findLookForm fieldset:first").show().addClass('active'); 
 
     function updateProgressBar(index) {
         $("#progressbar li").removeClass("active").eq(index).addClass("active");
@@ -155,6 +157,16 @@ $(document).ready(function() {
                 alert('Failed to retrieve images.');
             }
         });
+    });
+
+    $('.bl-box:nth-child(3)').click(function() {
+        // Hide all fieldsets
+        $("#msform fieldset").hide().removeClass('active');
+        // Assuming the "Find a Look" fieldset has an ID or unique class you can target
+        $("#findLookFieldset").show().addClass('active'); // Show and set to active the "Find a Look" fieldset
+        // Update progress bar if necessary
+        var findLookIndex = $("#findLookFieldset").index();
+        updateProgressBar(findLookIndex);
     });
     
 });
