@@ -166,6 +166,21 @@ def preprocess_image(image, target_size):
     image = image / 255.0  # Normalize pixel values
     return image
 
+@app.route('/api/my-wardrobe', methods=['GET'])
+def get_user_images():
+    # Ensure the user is logged in
+    if 'user_id' not in session:
+        return jsonify({'error': 'User not authenticated'}), 401
+
+    user_id = session['user_id']
+    try:
+        # Query images for the logged-in user
+        images = Session().query(Image).filter_by(UserID=user_id).all()
+        image_info = [{'image_id': img.ImageID, 'path': url_for('static', filename=img.ImagePath), 'upload_time': img.UploadTime.strftime('%Y-%m-%d %H:%M:%S')} for img in images]
+        return jsonify(image_info), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+        
 def rgb_to_hex(rgb):
     """Convert RGB values to hexadecimal color code."""
     return '#{:02x}{:02x}{:02x}'.format(*rgb)
@@ -231,16 +246,21 @@ def predict():
     if file.filename == '':
         return jsonify(error='No selected file'), 400
 
+    # Check if the user is logged in
+    if 'user_id' not in session:
+        return jsonify({'error': 'User not logged in'}), 401
+
+    user_id = session['user_id']  # Get user ID from session
+
     # Generate a random filename
     ext = os.path.splitext(file.filename)[1]
     random_filename = str(uuid.uuid4()) + ext
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], random_filename)
-    file.save(filepath)  # Ensure we're using forward slashes
-    print('Saving file to:', filepath)  # Outputs the file path to your console
+    file.save(filepath)  # Save the file
 
     uploaded_image_path = 'uploads/' + random_filename
 
-    # Load the saved image for processing
+    # Load and process the image
     image = PILImage.open(filepath)
     processed_image = preprocess_image(image, target_size=(28, 28))
 
@@ -257,12 +277,12 @@ def predict():
     dominant_color_hex = rgb_to_hex(tuple(dominant_color_rgb))
     
     # Open a session to save to the database
-    session = Session()
+    session_db = Session()
     try:
         # Save image information in the database
-        new_image = Image(ImagePath=uploaded_image_path)
-        session.add(new_image)
-        session.commit()
+        new_image = Image(UserID=user_id, ImagePath=uploaded_image_path)  # Associate image with the user
+        session_db.add(new_image)
+        session_db.commit()
 
         # Save prediction information in the database
         new_prediction = Prediction(
@@ -272,8 +292,8 @@ def predict():
             Category2=top_two_categories[1][0],
             Confidence2=top_two_categories[1][1]
         )
-        session.add(new_prediction)
-        session.commit()
+        session_db.add(new_prediction)
+        session_db.commit()
 
         return jsonify({
             'uploaded_image_path': url_for('static', filename=uploaded_image_path),
@@ -282,10 +302,10 @@ def predict():
             'predictionID': new_prediction.PredictionID
         })
     except Exception as e:
-        session.rollback()
+        session_db.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        session.close()
+        session_db.close()
 
 
 @app.route('/submit-feedback', methods=['POST'])

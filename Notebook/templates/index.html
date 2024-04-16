@@ -65,13 +65,16 @@
     <div class="conta">
         <div class="bl-main" id="bl-main">
 
-            <section>
+            <section id="my-wardrobe-section">
                 <div class="bl-box">
                     <h2>My Wardrobe</h2>
                 </div>
                 <div class="bl-content">
                     <h2>View and Manage Your Wardrobe</h2>
-                    <!-- My Wardrobe content here -->
+                    <!-- Placeholder for My Wardrobe images -->
+                    <div id="wardrobeImages" class="image-gallery">
+                        <!-- Images will be added here dynamically -->
+                    </div>
                 </div>
                 <span class="bl-icon bl-icon-close">Close</span>
             </section>
@@ -136,8 +139,32 @@
                     <h2>Find a Look</h2>
                 </div>
                 <div class="bl-content">
-                    <h2>Find the Perfect Look</h2>
-                    <!-- Find a Look content here -->
+                    <form id="findLookForm">
+                        <fieldset>
+                            <h2 class="fs-title">Event Details</h2>
+                            <h3 class="fs-subtitle">Tell us more about the event</h3>
+                            
+                            <label for="eventTime">Time of Day:</label>
+                            <select id="eventTime" name="eventTime">
+                                <option value="Day">Day</option>
+                                <option value="Night">Night</option>
+                            </select>
+            
+                            <label for="eventType">Type of Event:</label>
+                            <select id="eventType" name="eventType">
+                                <option value="Formal">Formal</option>
+                                <option value="Social">Social</option>
+                            </select>
+            
+                            <label for="weather">Weather:</label>
+                            <select id="weather" name="weather">
+                                <option value="Rain">Rain</option>
+                                <option value="Sunny">Sunny</option>
+                            </select>
+            
+                            <input type="submit" name="findLook" class="action-button" value="Find Look" />
+                        </fieldset>
+                    </form>
                 </div>
                 <span class="bl-icon bl-icon-close">Close</span>
             </section>

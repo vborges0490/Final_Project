@@ -124,6 +124,39 @@ $(document).ready(function() {
         var currentFieldset = $(this).closest('fieldset');
         $(this).hasClass('next') ? goToNextFieldset(currentFieldset) : goToPreviousFieldset(currentFieldset);
     });
+
+    $('.bl-box').first().click(function() {
+        $.ajax({
+            url: '/api/my-wardrobe',
+            type: 'GET',
+            success: function(data) {
+                $('#wardrobeImages').empty();  // Clear previous images
+                
+                data.forEach(function(image) {
+                    // Create an image element
+                    var imgElement = $('<img>').attr({
+                        src: image.path,
+                        alt: 'Wardrobe Image',
+                        class: 'wardrobe-image'
+                    });
+
+                    // Create a paragraph element for the upload time
+                    var timeElement = $('<p>').text('Uploaded: ' + image.upload_time).addClass('upload-time');
+
+                    // Create a div to group the image and its upload time
+                    var imageContainer = $('<div>').addClass('image-container');
+                    imageContainer.append(imgElement, timeElement);
+
+                    // Append the container to the gallery
+                    $('#wardrobeImages').append(imageContainer);
+                });
+            },
+            error: function() {
+                alert('Failed to retrieve images.');
+            }
+        });
+    });
+    
 });
 
 document.addEventListener('DOMContentLoaded', function() {

@@ -821,6 +821,65 @@ body {
 #msform .action-button:focus {
   box-shadow: 0 0 0 2px white, 0 0 0 3px #27ae60;
 }
+
+#findLookForm {
+  width: 500px;
+  margin: 50px auto;
+  text-align: center;
+  position: relative;
+}
+#findLookForm fieldset {
+  background: white;
+  border: 0 none;
+  border-radius: 3px;
+  box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.4);
+  padding: 20px 30px;
+  box-sizing: border-box;
+  width: 80%;
+  margin: 0 10%;
+
+  /*stacking fieldsets above each other*/
+  position: relative;
+}
+
+#findLookForm fieldset.active {
+    display: block;
+}
+
+/*Hide all except first fieldset*/
+#findLookForm fieldset:not(:first-of-type) {
+  display: none;
+}
+/*inputs*/
+#findLookForm input,
+#findLookForm textarea {
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  font-family: montserrat;
+  color: #2c3e50;
+  font-size: 13px;
+}
+/*buttons*/
+#findLookForm .action-button {
+  width: 110px;
+  background: #27ae60;
+  font-weight: bold;
+  color: white;
+  border: 0 none;
+  border-radius: 1px;
+  cursor: pointer;
+  padding: 10px;
+  margin: 10px 5px;
+  text-decoration: none;
+  font-size: 10px;
+}
+#findLookForm .action-button:hover,
+#findLookForm .action-button:focus {
+  box-shadow: 0 0 0 2px white, 0 0 0 3px #27ae60;
+}
 /*headings*/
 .fs-title {
   font-size: 15px;
@@ -907,6 +966,54 @@ body {
     border: 1px solid #000;
     display: inline-block; /* This allows the block to be centered by text-align */
     margin-bottom: 10px;
+}
+
+#my-wardrobe-section .bl-content {
+  text-align: center;
+}
+
+#wardrobe-images-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+
+.wardrobe-item {
+  width: 150px;
+  height: 150px;
+  overflow: hidden;
+  position: relative;
+}
+
+.wardrobe-image {
+  max-width: 100%;
+  max-height: 100%;
+  vertical-align: middle;
+  transition: transform 0.2s ease;
+}
+
+.wardrobe-item:hover .wardrobe-image {
+  transform: scale(1.1);
+}
+
+.image-container {
+  display: inline-block;
+  align-items: center;
+  margin: 10px;
+}
+
+.wardrobe-image {
+  width: 100px; 
+  height: 100px;
+  object-fit: cover;
+}
+
+.upload-time {
+  margin-top: 5px;
+  font-size: 8px;
+  color: #fff;
 }
 
 /*marking active/completed steps green*/
