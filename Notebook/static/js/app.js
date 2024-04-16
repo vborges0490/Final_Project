@@ -2,18 +2,33 @@ $(document).ready(function() {
     $("#msform fieldset").hide();
     $("#msform fieldset:first").show().addClass('active');
 
-    // Listen for the form submit event
-    $('#msform').submit(function(e) {
-        // Prevent the default form submission
-        e.preventDefault();
+    function updateProgressBar(index) {
+        $("#progressbar li").removeClass("active").eq(index).addClass("active");
+    }
 
-        // Check which fieldset is active
+    function goToNextFieldset(currentFieldset) {
+        var nextFieldset = currentFieldset.next();
+        if (nextFieldset.length) {
+            currentFieldset.removeClass('active').hide();
+            nextFieldset.addClass('active').show();
+            updateProgressBar(nextFieldset.index());
+        }
+    }
+
+    function goToPreviousFieldset(currentFieldset) {
+        var prevFieldset = currentFieldset.prev();
+        if (prevFieldset.length) {
+            currentFieldset.removeClass('active').hide();
+            prevFieldset.addClass('active').show();
+            updateProgressBar(prevFieldset.index());
+        }
+    }
+
+    $('#msform').on('submit', function(e) {
+        e.preventDefault();  // Prevent default form submission
         var currentFieldset = $(this).find('fieldset.active');
-
-        // If the active fieldset is the first one, handle the file upload via AJAX
         if (currentFieldset.has('input[type="file"]').length) {
             var formData = new FormData(this);
-
             $.ajax({
                 url: '/predict',
                 type: 'POST',
@@ -21,61 +36,93 @@ $(document).ready(function() {
                 contentType: false,
                 processData: false,
                 success: function(data) {
-                    console.log("Received data: ", data);
-
-                    if (!data.uploaded_image_path || !data.predicted_categories) {
-                        console.error('Required data missing in API response');
-                        return;
-                    }
-
-                    $('#uploadedImage').attr('src', data.uploaded_image_path).show();
-
-                    var predictedCategories = $('#predictedCategories');
-                    predictedCategories.empty();
-                    data.predicted_categories.forEach(function(category, index) {
-                        var radioButton = `<input type="radio" id="prediction${index}"
-                                              name="prediction" value="${category[0]}">
-                                           <label for="prediction${index}">${category[0]}</label>`;
-                        predictedCategories.append(radioButton);
-                    });
-
-                    // Move to the next fieldset
-                    goToNextFieldset(currentFieldset);
+                    handlePredictionSuccess(data, currentFieldset);
                 },
                 error: function(xhr, status, error) {
                     console.error('Upload error:', error);
                     alert('An error occurred while uploading the image. Please try again.');
                 }
             });
-        } else {
-            // Handle the submission of other fieldsets if necessary
         }
     });
 
-    function goToNextFieldset(currentFieldset) {
-        var nextFieldset = currentFieldset.next();
-        if (nextFieldset.length) {
-            currentFieldset.removeClass('active').hide();
-            nextFieldset.addClass('active').show();
+    function handlePredictionSuccess(data, currentFieldset) {
+        console.log("Received data: ", data);
+        if (!data.uploaded_image_path || !data.predicted_categories) {
+            console.error('Required data missing in API response');
+            return;
         }
-    }
-
-    function goToPreviousFieldset(currentFieldset) {
-        var previousFieldset = currentFieldset.prev();
-        if (previousFieldset.length) {
-            currentFieldset.removeClass('active').hide();
-            previousFieldset.addClass('active').show();
+        if (data.dominant_color_rgb) {
+            var rgbValue = `rgb(${data.dominant_color_rgb.join(',')})`;
+            $('#colorDisplay').css('background-color', rgbValue);
+            $('#colorCode').val(rgbValue);  // Store the RGB value in the form
+        } else if (data.dominant_color_hex) { // If only HEX is provided, convert it to RGB
+            var hex = data.dominant_color_hex;
+            var rgb = hexToRgb(hex);
+            $('#colorDisplay').css('background-color', rgb);
+            $('#colorCode').val(rgb);  // Store the RGB value in the form
         }
-    }
 
-    $(".next").click(function() {
-        var currentFieldset = $(this).closest('fieldset');
+        $('#uploadedImage').attr('src', data.uploaded_image_path).show();
+        $('#predictionID').val(data.predictionID);
+
+        var predictedCategories = $('#predictedCategories');
+        predictedCategories.empty();
+        data.predicted_categories.forEach(function(category, index) {
+            var radioButton = `<input type="radio" id="prediction${index}" name="prediction" value="${category[0]}">
+                               <label for="prediction${index}">${category[0]}</label>`;
+            predictedCategories.append(radioButton);
+        });
+
         goToNextFieldset(currentFieldset);
+    }
+
+    function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? `rgb(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)})` : null;
+    }
+
+    // Explicitly handle "Submit Feedback" button
+    $('.submit.action-button').off('click').on('click', function(e) {
+        e.preventDefault();
+        console.log("Submit Feedback button clicked");
+        submitFeedback();
     });
 
-    $(".previous").click(function() {
+    function submitFeedback() {
+        var formData = {
+            predictionID: $('#predictionID').val(),
+            isCorrectColor: $('#colorConfirmationCheckbox').is(':checked'),
+            colorCode: $('#colorCode').val(),
+            productType: $('input[name="prediction"]:checked').val(),
+            userFeedback: $('#userFeedback').val()
+        };
+
+        console.log("Submitting feedback:", formData);
+
+        $.ajax({
+            url: '/submit-feedback',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                alert('Thank you for your feedback!');
+                $('#msform').trigger("reset");
+                updateProgressBar(0);
+                $("#msform fieldset:first").show().addClass('active');
+                $("#msform fieldset").not(":first").hide().removeClass('active');
+            },
+            error: function(xhr, status, error) {
+                console.error('Error submitting feedback:', error);
+                alert('An error occurred while submitting your feedback. Please try again.');
+            }
+        });
+    }
+
+    // Navigation button handlers
+    $(".next, .previous").click(function() {
         var currentFieldset = $(this).closest('fieldset');
-        goToPreviousFieldset(currentFieldset);
+        $(this).hasClass('next') ? goToNextFieldset(currentFieldset) : goToPreviousFieldset(currentFieldset);
     });
 });
 

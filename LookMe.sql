@@ -20,8 +20,10 @@ CREATE TABLE Images (
 CREATE TABLE Predictions (
     PredictionID INT AUTO_INCREMENT PRIMARY KEY,
     ImageID INT,
-    Category VARCHAR(255) NOT NULL,
-    Confidence DECIMAL(5,4),
+    Category1 VARCHAR(255) NOT NULL,
+    Confidence1 DECIMAL(5,4),
+    Category2 VARCHAR(255) NOT NULL,
+    Confidence2 DECIMAL(5,4),
     PredictionTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (ImageID) REFERENCES Images(ImageID)
 );

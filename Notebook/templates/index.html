@@ -110,11 +110,18 @@
                                 <h2 class="fs-title">Provide Your Feedback</h2>
                                 <h3 class="fs-subtitle">Confirm the prediction and color</h3>
                                 <div id="feedbackSection">
+                                    <input type="hidden" id="predictionID" name="predictionID">
                                     <!-- Prediction categories will be loaded here as radio buttons -->
                                     <label for="colorConfirmationCheckbox">Is this the correct color?</label>
                                     <input type="checkbox" id="colorConfirmationCheckbox">
+                                    <input type="hidden" id="colorCode" name="colorCode">
                                     <br>
                                     <div id="colorDisplay" style="width: 50px; height: 50px; border: 1px solid #000; margin-bottom: 10px;"></div>
+                                    <div id="predictedCategories"></div>
+                                    <div id="feedbackinput">
+                                        <label for="userFeedback">Your Feedback:</label>
+                                        <textarea id="userFeedback" name="userFeedback"></textarea>
+                                    </div>
                                 </div>
                                 <input type="button" name="previous" class="previous action-button" value="Previous" />
                                 <input type="submit" name="submit" class="submit action-button" value="Submit Feedback" />

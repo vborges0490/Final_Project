@@ -10,7 +10,7 @@ from sklearn.cluster import KMeans
 import os
 import logging
 import mysql.connector
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.exc import IntegrityError
@@ -54,13 +54,28 @@ class Image(Base):
     ImagePath = Column(String(255), nullable=False)
     UploadTime = Column(DateTime, default=func.now())
 
+class Feedback(Base):
+    __tablename__ = 'Feedback'
+    FeedbackID = Column(Integer, primary_key=True, autoincrement=True)
+    PredictionID = Column(Integer, ForeignKey('Predictions.PredictionID'))
+    IsCorrectColor = Column(Boolean)
+    UserFeedback = Column(Text)
+    FeedbackTime = Column(DateTime(timezone=True), server_default=func.now())
+    ColorCode = Column(String(7))  # Storing color code as a string
+    ProductType = Column(String(255))  # Assuming product type is a simple string
+    # Relationship to join Feedback with Predictions (optional if needed elsewhere in your application)
+    prediction = relationship("Prediction", back_populates="feedbacks")
+
 class Prediction(Base):
     __tablename__ = 'Predictions'
     PredictionID = Column(Integer, primary_key=True, autoincrement=True)
     ImageID = Column(Integer, ForeignKey('Images.ImageID'))
-    Category = Column(String(255), nullable=False)
-    Confidence = Column(DECIMAL(5,4))
+    Category1 = Column(String(255), nullable=False)
+    Confidence1 = Column(DECIMAL(5,4))
+    Category2 = Column(String(255), nullable=False)
+    Confidence2 = Column(DECIMAL(5,4))
     PredictionTime = Column(DateTime, default=func.now())
+    feedbacks = relationship("Feedback", back_populates="prediction")
 
 Base.metadata.create_all(bind=engine)
 
@@ -235,30 +250,30 @@ def predict():
     top_two_indices = predictions.argsort()[-2:][::-1]
     categories = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 
                   'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
-    top_two_categories = [(categories[index], float(predictions[index])) for index in top_two_indices]
+    top_two_categories = [(categories[i], float(predictions[i])) for i in top_two_indices]
 
     dominant_colors = extract_dominant_color(image, num_colors=1)
     dominant_color_rgb = dominant_colors[0].tolist()
     dominant_color_hex = rgb_to_hex(tuple(dominant_color_rgb))
+    
     # Open a session to save to the database
-    session_db = Session()
+    session = Session()
     try:
-        # Check if the user is logged in
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({'success': False, 'message': 'User not logged in'}), 401
-
         # Save image information in the database
-        new_image = Image(UserID=user_id, ImagePath=uploaded_image_path)
-        session_db.add(new_image)
-        session_db.commit()
+        new_image = Image(ImagePath=uploaded_image_path)
+        session.add(new_image)
+        session.commit()
 
         # Save prediction information in the database
-        new_prediction = Prediction(ImageID=new_image.ImageID,
-                                    Category=top_two_categories[0][0],
-                                    Confidence=top_two_categories[0][1])
-        session_db.add(new_prediction)
-        session_db.commit()
+        new_prediction = Prediction(
+            ImageID=new_image.ImageID,
+            Category1=top_two_categories[0][0],
+            Confidence1=top_two_categories[0][1],
+            Category2=top_two_categories[1][0],
+            Confidence2=top_two_categories[1][1]
+        )
+        session.add(new_prediction)
+        session.commit()
 
         return jsonify({
             'uploaded_image_path': url_for('static', filename=uploaded_image_path),
@@ -267,28 +282,34 @@ def predict():
             'predictionID': new_prediction.PredictionID
         })
     except Exception as e:
-        session_db.rollback()
+        session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        session_db.close()
+        session.close()
 
 
 @app.route('/submit-feedback', methods=['POST'])
 def submit_feedback():
-    data = request.get_json()
-    new_feedback = Feedback(
-        PredictionID=data['predictionID'],
-        IsCorrectColor=data['isCorrectColor'],
-        UserFeedback=data['userFeedback']
-    )
-
+    # Use a local variable for the SQLAlchemy session to avoid name conflicts
+    db_session = Session()  # Create a new session instance for this request
     try:
-        session.add(new_feedback)
-        session.commit()
+        data = request.get_json()
+        new_feedback = Feedback(
+            PredictionID=data['predictionID'],
+            IsCorrectColor=data['isCorrectColor'],
+            UserFeedback=data['userFeedback'],
+            ColorCode=data['colorCode'],
+            ProductType=data['productType']
+        )
+
+        db_session.add(new_feedback)  # Use the local session variable here
+        db_session.commit()  # Commit the transaction
         return jsonify({'success': True, 'message': 'Feedback submitted successfully'}), 200
     except Exception as e:
-        session.rollback()
+        db_session.rollback()  # Rollback in case of an exception
         return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        db_session.close()  # Ensure the session is closed when done
 
 @app.errorhandler(500)
 def internal_error(error):
