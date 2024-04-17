@@ -159,14 +159,38 @@ $(document).ready(function() {
         });
     });
 
-    $('.bl-box:nth-child(3)').click(function() {
-        // Hide all fieldsets
-        $("#msform fieldset").hide().removeClass('active');
-        // Assuming the "Find a Look" fieldset has an ID or unique class you can target
-        $("#findLookFieldset").show().addClass('active'); // Show and set to active the "Find a Look" fieldset
-        // Update progress bar if necessary
-        var findLookIndex = $("#findLookFieldset").index();
-        updateProgressBar(findLookIndex);
+    $('#findLookButton').off('click').on('click', function(e) {
+        e.preventDefault(); // Prevent the default form submission if tied to a form
+    
+        const requestData = {
+            timeOfDay: $('#eventTime').val(),
+            eventType: $('#eventType').val(),
+            weather: $('#weather').val()
+        };
+    
+        console.log("Sending AJAX request with data:", requestData);
+    
+        $.ajax({
+            url: '/find-look',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(requestData),
+            success: function(response) {
+                console.log("AJAX request successful, response:", response);
+                if (response.look) {
+                    $('#upperImage').attr('src', response.look.upper ? `/static/${response.look.upper}` : '');
+                    $('#lowerImage').attr('src', response.look.lower ? `/static/${response.look.lower}` : '');
+                    $('#footwearImage').attr('src', response.look.footwear ? `/static/${response.look.footwear}` : '');
+    
+                    // Ensure the display section is visible
+                    $('#lookDisplay').css('display', 'grid');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX request failed:', error);
+                alert('Error fetching look. Please try again.');
+            }
+        });
     });
     
 });

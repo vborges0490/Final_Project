@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from tensorflow.keras.models import load_model
 from PIL import Image as PILImage
 import numpy as np
+import random
 import io
 import uuid
 from sklearn.cluster import KMeans
@@ -180,9 +181,48 @@ def get_user_images():
         return jsonify(image_info), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-        
+
+
+@app.route('/find-look', methods=['POST'])
+def find_look():
+    if 'user_id' not in session:
+        return jsonify({'error': 'User not logged in'}), 401
+
+    user_id = session['user_id']
+    data = request.get_json()
+    time_of_day = data['timeOfDay']
+    event_type = data['eventType']
+    weather = data['weather']
+
+    session_db = Session()
+    try:
+        look = {}
+        if event_type == 'Social' and time_of_day == 'Day' and weather == 'Sunny':
+            look['dress'] = fetch_random_image(session_db, user_id, 'Dress')
+            look['footwear'] = fetch_random_image(session_db, user_id, 'Sandal')
+        else:
+            look['upper'] = fetch_random_image(session_db, user_id, 'Shirt')
+            look['lower'] = fetch_random_image(session_db, user_id, 'Trouser')
+            look['footwear'] = fetch_random_image(session_db, user_id, 'Ankle boot' if weather == 'Rain' else 'Sneaker')
+
+        return jsonify({'look': look}), 200
+    except Exception as e:
+        session_db.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        session_db.close()
+
+def fetch_random_image(session, user_id, category):
+    images = session.query(Image).\
+        join(Prediction, Image.ImageID == Prediction.ImageID).\
+        join(Feedback, Prediction.PredictionID == Feedback.PredictionID).\
+        filter(Image.UserID == user_id, Feedback.ProductType == category).\
+        all()
+    if images:
+        return random.choice(images).ImagePath
+    return None
+
 def rgb_to_hex(rgb):
-    """Convert RGB values to hexadecimal color code."""
     return '#{:02x}{:02x}{:02x}'.format(*rgb)
 
 def extract_dominant_color(image, num_colors=3):
@@ -267,10 +307,10 @@ def predict():
     # Predict the category
     predictions = model.predict(processed_image)
     predictions = predictions.flatten()
-    top_two_indices = predictions.argsort()[-2:][::-1]
+    top_indices = predictions.argsort()[-10:][::-1]
     categories = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 
                   'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
-    top_two_categories = [(categories[i], float(predictions[i])) for i in top_two_indices]
+    top_two_categories = [(categories[i], float(predictions[i])) for i in top_indices]
 
     dominant_colors = extract_dominant_color(image, num_colors=1)
     dominant_color_rgb = dominant_colors[0].tolist()

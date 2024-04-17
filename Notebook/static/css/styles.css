@@ -614,10 +614,10 @@ fieldset {
 
 /* Modal Content */
 .modal-content {
-    background-color: #58504A;
+    background-color: #797989;
     margin: 15% auto; /* 15% from the top and centered */
     padding: 20px;
-    border: 1px solid #D3C4E3;
+    border: 1px solid #040404;
     width: 80%; /* Could be more or less, depending on screen size */
 	justify-content: center; /* Center children vertically */
 	display: flex; /* Use flexbox layout */
@@ -1064,4 +1064,25 @@ select {
 /* Hide the arrow indicator in IE */
 select::-ms-expand {
   display: none;
+}
+
+#lookDisplay {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 columns of equal width */
+  gap: 10px; /* Space between images */
+  padding: 10px; /* Padding around the grid */
+}
+
+.image-container {
+  display: flex;
+  justify-content: center; /* Center images horizontally */
+  align-items: center; /* Center images vertically */
+  height: 300px; /* Fixed height for all image containers */
+}
+
+.image-container img {
+  max-width: 100%; /* Max width of images is 100% of their container */
+  max-height: 100%; /* Max height is also confined within the container */
+  width: auto; /* Maintain aspect ratio */
+  height: auto; /* Maintain aspect ratio */
 }
