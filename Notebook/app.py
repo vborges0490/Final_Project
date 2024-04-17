@@ -307,7 +307,7 @@ def predict():
     # Predict the category
     predictions = model.predict(processed_image)
     predictions = predictions.flatten()
-    top_indices = predictions.argsort()[-10:][::-1]
+    top_indices = predictions.argsort()[-2:][::-1]
     categories = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 
                   'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
     top_two_categories = [(categories[i], float(predictions[i])) for i in top_indices]
